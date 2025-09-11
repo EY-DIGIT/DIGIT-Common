@@ -545,7 +545,7 @@ public class BillServicev2 {
 		String tenantId = demand.getTenantId();
 
 		BigDecimal totalAmountForDemand = BigDecimal.ZERO;
-		
+		BigDecimal totalPaidAmount = BigDecimal.ZERO;
 
 		/*
 		 * Map to store the bill account detail object with TaxHead code
@@ -562,6 +562,9 @@ public class BillServicev2 {
 
 			/* Total tax and collection for the whole demand/bill-detail */
 			totalAmountForDemand = totalAmountForDemand.add(amountForAccDeatil);
+			
+			/* Total  collection / Paid Amount */
+			totalPaidAmount = demandDetail.getCollectionAmount();
 		}
 
 		
@@ -575,6 +578,7 @@ public class BillServicev2 {
 				.fromPeriod(startPeriod)
 				.toPeriod(endPeriod)
 				.tenantId(tenantId)
+				.amountPaid(totalPaidAmount)
 				.additionalDetails(demand.getAdditionalDetails())
 				.build();
 	}
