@@ -563,8 +563,8 @@ public class BillServicev2 {
 			/* Total tax and collection for the whole demand/bill-detail */
 			totalAmountForDemand = totalAmountForDemand.add(amountForAccDeatil);
 			
-			/* Total  collection / Paid Amount */
-			totalPaidAmount = demandDetail.getCollectionAmount();
+			 /* Total collection / Paid Amount */
+	        totalPaidAmount = totalPaidAmount.add(demandDetail.getCollectionAmount());
 		}
 
 		
