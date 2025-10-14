@@ -22,7 +22,7 @@ RUN mvn -B -f /app/pom.xml package
 # Create runtime image
 #FROM egovio/8-openjdk-alpine
 # FROM egovio/amazoncorretto:17-alpine3.19
-FROM manish050994/amazoncorretto:17-alpine3.19 AS build
+FROM manish050994/amazoncorretto:17-alpine3.19
 
 WORKDIR /opt/egov
 
