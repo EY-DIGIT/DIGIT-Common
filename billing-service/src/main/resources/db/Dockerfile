@@ -1,5 +1,6 @@
 #FROM egovio/flyway:4.1.2
-FROM egovio/flyway:10.7.1
+# FROM egovio/flyway:10.7.1
+FROM manish050994/flyway:10.7.1
 
 COPY ./migration/main /flyway/sql
 
