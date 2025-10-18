@@ -1,14 +1,27 @@
 package org.egov.demand.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.jayway.jsonpath.DocumentContext;
-import com.jayway.jsonpath.JsonPath;
-import lombok.extern.slf4j.Slf4j;
+import static java.util.Objects.isNull;
+import static org.egov.demand.util.Constants.ADVANCE_BUSINESSSERVICE_JSONPATH_CODE;
+import static org.egov.demand.util.Constants.INVALID_TENANT_ID_MDMS_KEY;
+import static org.egov.demand.util.Constants.INVALID_TENANT_ID_MDMS_MSG;
+import static org.egov.demand.util.Constants.MDMS_CODE_FILTER;
+import static org.egov.demand.util.Constants.MDMS_MASTER_NAMES;
+import static org.egov.demand.util.Constants.MODULE_NAME;
+
+import java.math.BigDecimal;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+
 import org.egov.common.contract.request.RequestInfo;
 import org.egov.common.contract.request.Role;
+import org.egov.common.utils.MultiStateInstanceUtil;
 import org.egov.demand.amendment.model.ProcessInstance;
 import org.egov.demand.amendment.model.ProcessInstanceRequest;
 import org.egov.demand.amendment.model.ProcessInstanceResponse;
@@ -28,12 +41,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
-import java.math.BigDecimal;
-import java.sql.SQLException;
-import java.util.*;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.jayway.jsonpath.DocumentContext;
+import com.jayway.jsonpath.JsonPath;
 
-import static java.util.Objects.isNull;
-import static org.egov.demand.util.Constants.*;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @Slf4j
@@ -41,6 +56,9 @@ public class Util {
 
 	@Autowired
 	private ApplicationProperties appProps;
+	
+	@Autowired
+	private MultiStateInstanceUtil centralInstanceUtil;
 	
 	@Autowired
 	private ObjectMapper mapper;
@@ -63,7 +81,7 @@ public class Util {
 
 		List<MasterDetail> masterDetails = new ArrayList<>();
 		names.forEach(name -> {
-				masterDetails.add(MasterDetail.builder().name(name).build());
+				masterDetails.add(MasterDetail.builder().name(name).filter(filter).build());
 		});
 
 		ModuleDetail moduleDetail = ModuleDetail.builder().moduleName(moduleName).masterDetails(masterDetails).build();
@@ -85,7 +103,7 @@ public class Util {
 	 */
 	public DocumentContext getAttributeValues(MdmsCriteriaReq mdmsReq) {
 		StringBuilder uri = new StringBuilder(appProps.getMdmsHost()).append(appProps.getMdmsEndpoint());
-
+		
 		try {
 			return JsonPath.parse(serviceRequestRepository.fetchResult(uri.toString(), mdmsReq));
 		} catch (Exception e) {
@@ -194,8 +212,6 @@ public class Util {
 	
 	/**
 	 * Setting the receiptnumber from payment to bill
-	 * @param request
-	 * @param uuid
 	 * @return
 	 */
 	public ObjectNode setValuesAndGetAdditionalDetails(JsonNode additionalDetails, String key, String value) {
@@ -245,27 +261,26 @@ public class Util {
 
 		if (Constants.EMPLOYEE_TYPE_CODE.equalsIgnoreCase(userType) && !tenantId.contains(".")) {
 
-		Set<String> rolesTenantList = new HashSet<>();
-		Set<String> rolecodeList = new HashSet<>();
-		for (Role role : requestInfo.getUserInfo().getRoles()) {
-			rolesTenantList.add(role.getTenantId());
-			rolecodeList.add(role.getCode());
-		}
-
-		//bypassing required roles from the validation
-		boolean isEmployeeSearchByStateTenantAllowed = false;
-		List<String> statelevelRolecodeExclusionList = appProps.getStatelevelRolecodeExclusionList();
-		for (String rolecode : rolecodeList) {
-			if (statelevelRolecodeExclusionList.contains(rolecode)) {
-				isEmployeeSearchByStateTenantAllowed = true;
-				break;
+			Set<String> rolesTenantList = new HashSet<>();
+			Set<String> rolecodeList = new HashSet<>();
+			for (Role role : requestInfo.getUserInfo().getRoles()) {
+				rolesTenantList.add(role.getTenantId());
+				rolecodeList.add(role.getCode());
 			}
+
+			//bypassing required roles from the validation
+			boolean isEmployeeSearchByStateTenantAllowed = false;
+			List<String> statelevelRolecodeExclusionList = appProps.getStatelevelRolecodeExclusionList();
+			for (String rolecode : rolecodeList) {
+				if (statelevelRolecodeExclusionList.contains(rolecode)) {
+					isEmployeeSearchByStateTenantAllowed = true;
+					break;
+				}
+			}
+
+			if (!isEmployeeSearchByStateTenantAllowed)
+				throw new CustomException("EG_BS_INVALID_TENANTID", "Employees cannot search based on state level tenantid");
 		}
-
-		if (!isEmployeeSearchByStateTenantAllowed)
-			throw new CustomException("EG_BS_INVALID_TENANTID", "Employees cannot search based on state level tenantid");
-	}
-
 	}
 	
 	/**
@@ -356,7 +371,7 @@ public class Util {
 		
 		return query.toString();
 	}
-
+	
 	private String createPlaceHolderForList(Set<String> ids) {
 		
 		StringBuilder builder = new StringBuilder();
