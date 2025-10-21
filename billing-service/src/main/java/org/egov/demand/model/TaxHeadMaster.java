@@ -2,18 +2,20 @@ package org.egov.demand.model;
 
 import java.util.List;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
 import org.egov.demand.model.enums.Category;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class TaxHeadMaster {
 
 	private String id;
@@ -29,7 +31,7 @@ public class TaxHeadMaster {
 	private String name;
 
 	private String code;
-	
+
 	private List<GlCodeMaster> glCodes;
 
 	private Boolean isDebit = false;
@@ -39,10 +41,9 @@ public class TaxHeadMaster {
 	private Long validFrom;
 	@NotNull
 	private Long validTill;
-	
+
 	private Integer order;
 
 	private AuditDetail auditDetail;
-	
 
 }
