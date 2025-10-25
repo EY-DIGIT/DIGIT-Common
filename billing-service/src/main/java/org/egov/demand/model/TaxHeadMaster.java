@@ -2,11 +2,10 @@ package org.egov.demand.model;
 
 import java.util.List;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotNull;
-
 import org.egov.demand.model.enums.Category;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
